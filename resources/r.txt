@@ -1,0 +1,39 @@
+    QLineEdit:
+background-color: rgba(255, 255, 255, 0);
+border-style: outset;
+border-top-width: 0px;
+border-bottom-width: 1px;
+border-color: rgb(255, 255, 255);
+color: rgb(255, 255, 255);
+font: 63 9pt "Adobe Fan Heiti Std";
+
+
+    QPushButton:
+QPushButton{
+background-color: rgb(209, 176, 255);
+color: rgb(255, 255, 255);
+border-style: outset;
+     border-radius: 22px;
+     font: bold 10px;
+	 padding: 7px;
+padding-right: 15px;
+padding-left: 15px;
+
+	font: 63 12pt "Adobe Fan Heiti Std B";
+}
+QPushButton:hover{
+background-color: rgb(176, 120, 255);
+}
+QPushButton:pressed{
+background-color:  rgb(209, 176, 255);
+}
+
+
+    QLabel:
+background-color: rgba(255, 255, 255, 0);
+color: rgb(255, 255, 255);
+font: 63 10pt "Adobe Fan Heiti Std B";
+
+
+    QMainWindow:
+background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(1, 107, 167, 255), stop:1 rgba(20, 36, 70, 255))
