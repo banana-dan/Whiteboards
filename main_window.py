@@ -1,5 +1,6 @@
 import sys
 from note import NoteWindow
+from whiteboard import WhiteboardWindow
 from PyQt5 import uic  # Импортируем uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -15,6 +16,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.widget_data = []
         self.note = NoteWindow()
+        self.whiteboard = WhiteboardWindow()
         uic.loadUi("layouts/main.ui", self)  # loading ui
         # setting stylesheet
         with open("resources/scrollbar.txt") as file:
@@ -50,7 +52,7 @@ class MainWindow(QMainWindow):
             # костомизация элемента в зависимости от типа
             if element_type == "белая доска":
                 item.lineEdit.setText("Доска " + str(len(self.widget_data) + 1))
-                element_data = None  # todo
+                item.imageLabel.mousePressEvent = self.go_to_whiteboard_window
 
             if element_type == "заметка":
                 item.lineEdit.setText("Заметка " + str(len(self.widget_data) + 1))
@@ -76,6 +78,10 @@ class MainWindow(QMainWindow):
     def go_to_main_window(self, event):
         self.show()
 
+    def go_to_whiteboard_window(self, event):
+        self.hide()
+        self.whiteboard.show()
+        self.whiteboard.hideEvent = self.go_to_main_window
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
