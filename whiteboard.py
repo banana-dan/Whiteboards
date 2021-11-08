@@ -4,7 +4,7 @@ from PyQt5 import uic  # Импортируем uic
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from elements import ElementText
+from elements import *
 
 # константы
 down_menu_height = 30
@@ -21,7 +21,6 @@ screen_resolution_data = [(800, 400), (1600, 800), (3200, 1600), (6400, 3200), (
                           (12800, 6400)]  # todo не получается сделать больше разрешение
 tool_data = {"pen": 0, "eraser": 1, "line": 2, "figure_square": 3, "figure_circle": 4,
              "other_text": 5, "other_checkbox": 7, "add_note": 6, "add_image": 8, "add_csv": 9}
-element_types_data = {"text": 0, "check_box": 1}
 
 
 # отлов ошибок
@@ -129,7 +128,9 @@ class WhiteboardCanvas(QFrame):
         self.main_curr_y = main_y / curr_y
 
     def resize_elements(self):
-        for el_type, el, begin, end in self.elements:
+        for el in self.elements:
+            el_type = el.get_type()
+            begin, end = el.get_main_geometry()
             if el_type == element_types_data["text"]:
                 el.move(begin.x() / self.main_curr_x, begin.y() / self.main_curr_y)
                 el.setFixedWidth(end.x() / self.main_curr_x - begin.x() / self.main_curr_x)
@@ -138,7 +139,14 @@ class WhiteboardCanvas(QFrame):
                 font.setPixelSize(el.height())
                 el.setFont(font)
                 el.setText(el.text())
-                el.setTextMargins(0,0,0,0)
+                el.setTextMargins(0, 0, 0, 0)
+            if el_type == element_types_data["check_box"]:
+                print(el)
+                el.move(begin.x() / self.main_curr_x, begin.y() / self.main_curr_y)
+                el.setFixedWidth(end.x() / self.main_curr_x - begin.x() / self.main_curr_x)
+                el.setFixedHeight(end.y() / self.main_curr_y - begin.y() / self.main_curr_y)
+                el.setStyleSheet(
+                    f"QCheckBox::indicator {{ width: {el.height()}; height: {el.height()};}}")
 
     def mousePressEvent(self, event):
         # карандаш
@@ -428,6 +436,7 @@ class WhiteboardCanvas(QFrame):
                    screen_resolution_data[resolution_main_id][0])
         pen.setStyle(Qt.DashLine)
         painter.setPen(pen)
+
         painter.drawLine(begin, QPoint(end.x(), begin.y()))
         painter.drawLine(QPoint(end.x(), begin.y()), end)
         painter.drawLine(end, QPoint(begin.x(), end.y()))
@@ -443,18 +452,28 @@ class WhiteboardCanvas(QFrame):
                    screen_resolution_data[resolution_main_id][0])
         pen.setStyle(Qt.DashLine)
         painter.setPen(pen)
+        width_height = max(begin.y(), end.y()) - min(begin.y(), end.y())
+        if begin.y() <= end.y() and begin.x() <= end.x():
+            begin, end = begin, QPoint(begin.x() + width_height, begin.y() + width_height)
+        elif begin.y() >= end.y() and begin.x() <= end.x():
+            begin, end = QPoint(begin.x(), begin.y() - width_height), QPoint(
+                begin.x() + width_height, begin.y())
+        elif begin.y() >= end.y() and begin.x() >= end.x():
+            begin, end = QPoint(begin.x() - width_height, end.y()), begin
+        elif begin.y() <= end.y() and begin.x() >= end.x():
+            begin, end = QPoint(begin.x() - width_height, begin.y()), QPoint(begin.x(), end.y())
+
         painter.drawLine(begin, QPoint(begin.x(), end.y()))
-        painter.drawLine(QPoint(begin.x(), end.y()), QPoint(end.y() - begin.y() + begin.x(), end.y()))
-        painter.drawLine(QPoint(end.y() - begin.y() + begin.x(), end.y()), QPoint(end.y() - begin.y() + begin.x(), begin.y()))
-        painter.drawLine(QPoint(end.y() - begin.y() + begin.x(), begin.y()), begin)
-        painter.end()
+        painter.drawLine(QPoint(begin.x(), end.y()), end)
+        painter.drawLine(end, QPoint(end.x(), begin.y()))
+        painter.drawLine(QPoint(end.x(), begin.y()), begin)
 
     def add_text(self, begin, end):
         text = ElementText(self)
         text.setText("...")
         text.setTextMargins(0, 0, 0, 0)
-        # with open("resources/line_edit.txt") as file:
-        #     text.setStyleSheet(file.read())
+        with open("resources/line_edit.txt") as file:
+            text.setStyleSheet(file.read())
 
         max_x = max(begin.x(), end.x())
         max_y = max(begin.y(), end.y())
@@ -465,30 +484,33 @@ class WhiteboardCanvas(QFrame):
         text.setFont(font)
         text.setGeometry(min_x, min_y, max_x - min_x, max_y - min_y)
         text.show()
-        self.elements.append((element_types_data["text"], text,
-                              QPoint(min_x * self.main_curr_x, min_y * self.main_curr_y),
-                              QPoint(max_x * self.main_curr_x, max_y * self.main_curr_y)))
+        text.set_main_geometry(QPoint(min_x * self.main_curr_x, min_y * self.main_curr_y),
+                               QPoint(max_x * self.main_curr_x, max_y * self.main_curr_y))
+        self.elements.append(text)
 
     def add_check_box(self, begin, end):
-        # todo
-        text = ElementText(self)
-        text.setText("...")
-        text.setTextMargins(0, 0, 0, 0)
-        # with open("resources/line_edit.txt") as file:
-        #     text.setStyleSheet(file.read())
-
-        max_x = max(begin.x(), end.x())
-        max_y = max(begin.y(), end.y())
-        min_x = min(begin.x(), end.x())
-        min_y = min(begin.y(), end.y())
-        font = QFont()
-        font.setPixelSize(max_y - min_y)
-        text.setFont(font)
-        text.setGeometry(min_x, min_y, max_x - min_x, max_y - min_y)
-        text.show()
-        self.elements.append((element_types_data["text"], text,
-                              QPoint(min_x * self.main_curr_x, min_y * self.main_curr_y),
-                              QPoint(max_x * self.main_curr_x, max_y * self.main_curr_y)))
+        box = ElementCheckBox(self)
+        box.setContentsMargins(0, 0, 0, 0)
+        box.show()
+        width_height = max(begin.y(), end.y()) - min(begin.y(), end.y())
+        if begin.y() <= end.y() and begin.x() <= end.x():
+            begin, end = begin, QPoint(begin.x() + width_height, begin.y() + width_height)
+        elif begin.y() >= end.y() and begin.x() <= end.x():
+            begin, end = QPoint(begin.x(), begin.y() - width_height), QPoint(
+                begin.x() + width_height, begin.y())
+        elif begin.y() >= end.y() and begin.x() >= end.x():
+            begin, end = QPoint(begin.x() - width_height, end.y()), begin
+        elif begin.y() <= end.y() and begin.x() >= end.x():
+            begin, end = QPoint(begin.x() - width_height, begin.y()), QPoint(begin.x(), end.y())
+        box.setGeometry(begin.x(), begin.y(), end.x() - begin.x(), end.y() - begin.y())
+        if begin.x() == end.x():
+            return
+        box.set_main_geometry(QPoint(begin.x() * self.main_curr_x, begin.y() * self.main_curr_y),
+                              QPoint(end.x() * self.main_curr_x, end.y() * self.main_curr_y))
+        self.elements.append(box)
+        box.setStyleSheet(
+            f"QCheckBox::indicator {{ width: {width_height}; height: {width_height};}}")
+        self.update()
 
     # геттеры и сеттеры
     def set_tool(self, tool):

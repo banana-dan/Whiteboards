@@ -21,8 +21,6 @@ if __name__ == '__main__':
         settings_window.show()
 
 
-
-
     main_window = MainWindow()
     main_window.show()
     main_window.settingsButton.clicked.connect(main_window_to_settings_window)
